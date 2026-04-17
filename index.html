@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sameeksha · Portfolio</title>
+  <meta name="description" content="Personal stock portfolio tracker — live prices, editable positions, allocation breakdown." />
+
+  <!-- Fonts (matches sameeksha-mehrotra.github.io) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>" />
+</head>
+<body>
+
+<!-- ─── NAV ─────────────────────────────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a class="nav-logo" href="#">
+      <span class="logo-icon">📈</span>
+      <span class="gradient-text">Portfolio</span>
+    </a>
+
+    <div class="nav-right">
+      <span class="price-timestamp" id="priceTimestamp">
+        <i class="fa-regular fa-clock"></i> Loading prices…
+      </span>
+      <button class="btn btn-sm btn-ghost" id="refreshBtn" onclick="refreshPrices()" title="Refresh prices">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+      <a href="https://sameeksha-mehrotra.github.io/" class="btn btn-sm btn-outline" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-left"></i> Main Site
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO / SUMMARY ───────────────────────────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-bg">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+  </div>
+  <div class="container">
+    <div class="hero-header">
+      <h1>My <span class="gradient-text">Investment Portfolio</span></h1>
+      <p class="hero-sub">Tracking performance across ETFs, stocks &amp; cash · Updated daily at market close</p>
+    </div>
+
+    <div class="summary-cards">
+      <div class="stat-card stat-card--primary" id="cardTotal">
+        <div class="stat-label"><i class="fa-solid fa-wallet"></i> Total Portfolio</div>
+        <div class="stat-value" id="totalValue">—</div>
+        <div class="stat-sub" id="totalSub"></div>
+      </div>
+      <div class="stat-card" id="cardToday">
+        <div class="stat-label"><i class="fa-solid fa-chart-line"></i> Today's Change</div>
+        <div class="stat-value" id="todayChange">—</div>
+        <div class="stat-sub" id="todaySub"></div>
+      </div>
+      <div class="stat-card" id="cardInvested">
+        <div class="stat-label"><i class="fa-solid fa-arrow-trend-up"></i> Total Gain / Loss</div>
+        <div class="stat-value" id="totalPL">—</div>
+        <div class="stat-sub" id="totalPLSub"></div>
+      </div>
+      <div class="stat-card" id="cardCash">
+        <div class="stat-label"><i class="fa-solid fa-piggy-bank"></i> Cash Reserve</div>
+        <div class="stat-value" id="cashValue">—</div>
+        <div class="stat-sub" id="cashSub"></div>
+        <button class="btn btn-xs btn-ghost stat-btn" onclick="showCashModal()">Manage</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOLDINGS ──────────────────────────────────────────────────────────────── -->
+<section class="section" id="holdings">
+  <div class="container">
+
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Holdings</h2>
+        <p class="section-sub" id="holdingsCount"></p>
+      </div>
+      <div class="section-actions">
+        <button class="btn btn-sm btn-ghost" onclick="toggleSort()">
+          <i class="fa-solid fa-arrow-up-wide-short"></i> Sort
+        </button>
+        <button class="btn btn-sm btn-secondary" onclick="showAddStockModal()">
+          <i class="fa-solid fa-plus"></i> Add Stock
+        </button>
+      </div>
+    </div>
+
+    <!-- Chart + top stats -->
+    <div class="holdings-overview">
+      <div class="chart-card">
+        <h3 class="chart-title">Allocation</h3>
+        <div class="chart-wrap">
+          <canvas id="allocationChart"></canvas>
+          <div class="chart-center" id="chartCenter"></div>
+        </div>
+        <div class="chart-legend" id="chartLegend"></div>
+      </div>
+
+      <div class="holdings-stats">
+        <div class="holdings-stat-grid" id="holdingsStatGrid"></div>
+      </div>
+    </div>
+
+    <!-- Holdings table -->
+    <div class="table-wrap">
+      <table class="holdings-table" id="holdingsTable">
+        <thead>
+          <tr>
+            <th data-col="ticker">Ticker</th>
+            <th data-col="name"  class="hide-sm">Name</th>
+            <th data-col="type"  class="hide-md">Type</th>
+            <th data-col="shares">Shares</th>
+            <th data-col="avgCost" class="hide-sm">Avg Cost</th>
+            <th data-col="price">Price</th>
+            <th data-col="value">Value</th>
+            <th data-col="pl">P&amp;L</th>
+            <th data-col="weight" class="hide-sm">Weight</th>
+            <th data-col="actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="holdingsTbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── TRANSACTIONS ──────────────────────────────────────────────────────────── -->
+<section class="section section--alt" id="transactions">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Transaction History</h2>
+        <p class="section-sub" id="txCount"></p>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="exportTransactions()" title="Download CSV">
+        <i class="fa-solid fa-download"></i> Export CSV
+      </button>
+    </div>
+
+    <div class="table-wrap" id="txTableWrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Ticker</th>
+            <th class="hide-sm">Name</th>
+            <th>Shares</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th class="hide-sm">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="txTbody"></tbody>
+      </table>
+      <div class="empty-state" id="txEmpty" style="display:none">
+        <i class="fa-regular fa-clock-rotate-left fa-2x"></i>
+        <p>No transactions yet. Buy or sell a position to get started.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ────────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>Crafted with <span class="heart">♥</span> by Sameeksha · Prices via <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a> (yfinance)</span>
+    <span class="footer-links">
+      <a href="https://github.com/sameeksha-mehrotra/stock-portfolio" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> Source</a>
+      <a href="https://sameeksha-mehrotra.github.io/" target="_blank" rel="noopener"><i class="fa-solid fa-house"></i> Main Site</a>
+    </span>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     MODALS
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Trade modal (Buy / Sell) -->
+<div class="modal-overlay" id="tradeModalOverlay" onclick="closeModal('tradeModal')">
+  <div class="modal" id="tradeModal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="tradeModalTitle">Buy Stock</h3>
+      <button class="modal-close" onclick="closeModal('tradeModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-ticker-info" id="tradeTickerInfo"></div>
+
+      <div class="form-group">
+        <label>Shares</label>
+        <input type="number" id="tradeShares" class="form-input" placeholder="0.0000" min="0.0001" step="0.0001"
+               oninput="updateTradeTotal()" />
+        <div class="input-hint" id="tradeSharesHint"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Price per Share <span class="label-badge">USD</span></label>
+        <input type="number" id="tradePrice" class="form-input" placeholder="0.00" min="0.01" step="0.01"
+               oninput="updateTradeTotal()" />
+        <div class="input-hint">Leave blank to use current market price</div>
+      </div>
+
+      <div class="trade-summary" id="tradeSummary">
+        <div class="trade-summary-row">
+          <span>Estimated Total</span>
+          <span id="tradeTotal" class="trade-total">—</span>
+        </div>
+        <div class="trade-summary-row" id="tradeCashRow">
+          <span id="tradeCashLabel">Cash after trade</span>
+          <span id="tradeCashAfter">—</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notes <span class="label-optional">(optional)</span></label>
+        <input type="text" id="tradeNotes" class="form-input" placeholder="e.g. DCA purchase" maxlength="120" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('tradeModal')">Cancel</button>
+      <button class="btn btn-primary" id="tradeConfirmBtn" onclick="confirmTrade()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Stock modal -->
+<div class="modal-overlay" id="addStockModalOverlay" onclick="closeModal('addStockModal')">
+  <div class="modal" id="addStockModal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Add New Position</h3>
+      <button class="modal-close" onclick="closeModal('addStockModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="info-banner">
+        <i class="fa-solid fa-circle-info"></i>
+        After adding, commit <code>data/portfolio.json</code> to GitHub so the daily price Action picks up the new ticker.
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ticker Symbol <span class="label-required">*</span></label>
+          <input type="text" id="addTicker" class="form-input" placeholder="e.g. AAPL" maxlength="10"
+                 oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label>Type <span class="label-required">*</span></label>
+          <select id="addType" class="form-input">
+            <option value="Stock">Stock</option>
+            <option value="ETF">ETF</option>
+            <option value="Crypto">Crypto</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Company / Fund Name <span class="label-required">*</span></label>
+        <input type="text" id="addName" class="form-input" placeholder="e.g. Apple Inc." maxlength="80" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Shares Held <span class="label-required">*</span></label>
+          <input type="number" id="addShares" class="form-input" placeholder="0.0000" min="0" step="0.0001" />
+        </div>
+        <div class="form-group">
+          <label>Average Cost <span class="label-badge">per share</span></label>
+          <input type="number" id="addAvgCost" class="form-input" placeholder="0.00" min="0" step="0.01" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addStockModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddStock()"><i class="fa-solid fa-plus"></i> Add Position</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Avg Cost modal -->
+<div class="modal-overlay" id="editCostModalOverlay" onclick="closeModal('editCostModal')">
+  <div class="modal modal--sm" id="editCostModal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Position</h3>
+      <button class="modal-close" onclick="closeModal('editCostModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-ticker-info" id="editCostTickerInfo"></div>
+      <div class="form-group">
+        <label>Average Cost per Share <span class="label-badge">USD</span></label>
+        <input type="number" id="editCostValue" class="form-input" min="0" step="0.01" />
+        <div class="input-hint">This affects your P&amp;L calculation</div>
+      </div>
+      <div class="form-group">
+        <label>Shares Held</label>
+        <input type="number" id="editSharesValue" class="form-input" min="0" step="0.0001" />
+        <div class="input-hint">Update if you transferred positions from another broker</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editCostModal')">Cancel</button>
+      <button class="btn btn-danger-outline" id="removePositionBtn">Remove Position</button>
+      <button class="btn btn-primary" onclick="confirmEditCost()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cash modal -->
+<div class="modal-overlay" id="cashModalOverlay" onclick="closeModal('cashModal')">
+  <div class="modal modal--sm" id="cashModal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Manage Cash</h3>
+      <button class="modal-close" onclick="closeModal('cashModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="cash-balance-display" id="cashBalanceDisplay"></div>
+      <div class="form-row">
+        <button class="toggle-btn" id="cashDepositTab"  onclick="setCashMode('deposit')" >Deposit</button>
+        <button class="toggle-btn" id="cashWithdrawTab" onclick="setCashMode('withdraw')">Withdraw</button>
+      </div>
+      <div class="form-group" style="margin-top:1rem">
+        <label>Amount <span class="label-badge">USD</span></label>
+        <input type="number" id="cashAmount" class="form-input" placeholder="0.00" min="0.01" step="0.01" oninput="updateCashPreview()" />
+      </div>
+      <div class="trade-summary" id="cashPreview" style="display:none">
+        <div class="trade-summary-row">
+          <span>Cash after</span>
+          <span id="cashAfterPreview">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cashModal')">Cancel</button>
+      <button class="btn btn-primary" id="cashConfirmBtn" onclick="confirmCash()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete modal -->
+<div class="modal-overlay" id="confirmDeleteOverlay" onclick="closeModal('confirmDelete')">
+  <div class="modal modal--sm" id="confirmDelete" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Remove Position</h3>
+      <button class="modal-close" onclick="closeModal('confirmDelete')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmDeleteText">Are you sure you want to remove this position? This cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmDelete')">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
