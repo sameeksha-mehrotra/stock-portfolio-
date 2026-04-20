@@ -174,6 +174,77 @@
   </div>
 </section>
 
+<!-- ─── WATCHLIST ────────────────────────────────────────────────────────────── -->
+<section class="section section--alt" id="watchlist">
+  <div class="container">
+
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Watchlist</h2>
+        <p class="section-sub" id="watchlistSub">Stocks &amp; ETFs on your radar for potential investment</p>
+      </div>
+      <div class="section-actions">
+        <button class="btn btn-sm btn-secondary" onclick="showAddWatchModal()">
+          <i class="fa-solid fa-plus"></i> Add to Watchlist
+        </button>
+      </div>
+    </div>
+
+    <div id="watchlistGrid" class="watchlist-grid"></div>
+
+  </div>
+</section>
+
+<!-- Add to Watchlist modal -->
+<div class="modal-overlay" id="addWatchModalOverlay" onclick="closeModal('addWatchModal')">
+  <div class="modal" id="addWatchModal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Add to Watchlist</h3>
+      <button class="modal-close" onclick="closeModal('addWatchModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ticker Symbol <span class="label-required">*</span></label>
+          <input type="text" id="watchTicker" class="form-input" placeholder="e.g. NVDA" maxlength="10"
+                 oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label>Type <span class="label-required">*</span></label>
+          <select id="watchType" class="form-input">
+            <option value="Stock">Stock</option>
+            <option value="ETF">ETF</option>
+            <option value="Crypto">Crypto</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Company / Fund Name <span class="label-required">*</span></label>
+        <input type="text" id="watchName" class="form-input" placeholder="e.g. NVIDIA Corporation" maxlength="80" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Reason / Tag</label>
+          <input type="text" id="watchReason" class="form-input" placeholder="e.g. AI / Growth" maxlength="40" />
+        </div>
+        <div class="form-group">
+          <label>Target Price <span class="label-badge">USD · optional</span></label>
+          <input type="number" id="watchTarget" class="form-input" placeholder="0.00" min="0" step="0.01" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes <span class="label-optional">(optional)</span></label>
+        <input type="text" id="watchNotes" class="form-input" placeholder="Why are you watching this?" maxlength="160" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addWatchModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddWatch()"><i class="fa-solid fa-eye"></i> Add to Watchlist</button>
+    </div>
+  </div>
+</div>
+
 <!-- ─── TRANSACTIONS ──────────────────────────────────────────────────────────── -->
 <section class="section section--alt" id="transactions">
   <div class="container">

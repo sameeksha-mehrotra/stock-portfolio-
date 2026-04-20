@@ -60,12 +60,15 @@ def main():
         portfolio = json.load(f)
 
     tickers = [h["ticker"] for h in portfolio.get("holdings", [])]
-    if not tickers:
+    watchlist_tickers = [w["ticker"] for w in portfolio.get("watchlist", [])]
+    all_tickers = list(dict.fromkeys(tickers + watchlist_tickers))  # deduplicated, order preserved
+
+    if not all_tickers:
         print("No tickers found in data/portfolio.json — nothing to do.")
         return
 
-    print(f"Fetching prices for: {', '.join(tickers)}\n")
-    prices = fetch_prices(tickers)
+    print(f"Fetching prices for: {', '.join(all_tickers)}\n")
+    prices = fetch_prices(all_tickers)
 
     output = {
         "updated": datetime.now(timezone.utc).isoformat(),
@@ -75,9 +78,9 @@ def main():
     with open("data/prices.json", "w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"\nDone — updated {len(prices)}/{len(tickers)} tickers.")
-    if len(prices) < len(tickers):
-        missing = set(tickers) - set(prices.keys())
+    print(f"\nDone — updated {len(prices)}/{len(all_tickers)} tickers.")
+    if len(prices) < len(all_tickers):
+        missing = set(all_tickers) - set(prices.keys())
         print(f"Missing: {', '.join(missing)}")
         sys.exit(1)
 

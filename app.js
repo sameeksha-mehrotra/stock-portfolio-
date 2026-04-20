@@ -167,8 +167,8 @@ async function loadPortfolio() {
   try {
     const res = await fetch(PORTFOLIO_URL + '?v=' + Date.now());
     portfolio = await res.json();
-    // Ensure transactions array exists
     if (!portfolio.transactions) portfolio.transactions = [];
+    if (!portfolio.watchlist)    portfolio.watchlist    = [];
     savePortfolio();
   } catch {
     portfolio = getDefaultPortfolio();
@@ -272,6 +272,7 @@ function renderAll() {
   renderMiniCards();
   renderHoldingsTable();
   renderSectorAnalysis();
+  renderWatchlist();
   renderTransactions();
 }
 
@@ -841,7 +842,7 @@ function closeModal(id) {
 // Close modals on Escape key
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    ['tradeModal','addStockModal','editCostModal','cashModal','confirmDelete']
+    ['tradeModal','addStockModal','editCostModal','cashModal','confirmDelete','addWatchModal']
       .forEach(id => closeModal(id));
   }
 });
@@ -894,6 +895,162 @@ function fmtNum(n, dec = 2) {
 
 function fmtDate() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  WATCHLIST
+// ══════════════════════════════════════════════════════════════════════════════
+
+const REASON_COLORS = {
+  'International Diversification': '#6366f1',
+  'Defensive / Fixed Income':      '#10b981',
+  'Sector Gap — Healthcare':       '#14b8a6',
+  'Sector Gap — Real Estate':      '#a855f7',
+  'Small Cap Value Tilt':          '#f97316',
+  'AI / Growth':                   '#3b82f6',
+  'Dividend / Income':             '#f59e0b',
+};
+
+function reasonColor(reason) {
+  if (!reason) return '#94a3b8';
+  for (const [key, val] of Object.entries(REASON_COLORS)) {
+    if (reason.toLowerCase().includes(key.toLowerCase().split(' ')[0].toLowerCase())) return val;
+  }
+  return '#a78bfa';
+}
+
+function renderWatchlist() {
+  const grid = el('watchlistGrid');
+  if (!grid) return;
+
+  if (!portfolio.watchlist) portfolio.watchlist = [];
+
+  const sub = el('watchlistSub');
+  if (sub) sub.textContent = `${portfolio.watchlist.length} ticker${portfolio.watchlist.length !== 1 ? 's' : ''} on your radar`;
+
+  if (portfolio.watchlist.length === 0) {
+    grid.innerHTML = `<div class="watchlist-empty">
+      <i class="fa-regular fa-eye fa-2x"></i>
+      <p>No stocks on your watchlist yet. Click <strong>Add to Watchlist</strong> to start tracking.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = portfolio.watchlist.map((w, idx) => {
+    const p      = getPrice(w.ticker);
+    const chg    = getChange(w.ticker);
+    const chgP   = getChangePct(w.ticker);
+    const h52    = prices[w.ticker]?.high52;
+    const l52    = prices[w.ticker]?.low52;
+    const color  = TYPE_COLORS[w.type] || TYPE_COLORS.Other;
+    const rColor = reasonColor(w.reason);
+    const pos    = chg >= 0;
+
+    const pRange = (p && h52 && l52 && h52 > l52)
+      ? Math.max(0, Math.min(100, (p - l52) / (h52 - l52) * 100)).toFixed(1)
+      : null;
+
+    const targetDiff = (w.targetPrice && p)
+      ? ((w.targetPrice - p) / p * 100)
+      : null;
+
+    const inPortfolio = portfolio.holdings.some(h => h.ticker === w.ticker);
+
+    return `
+      <div class="watch-card" id="watch-card-${idx}">
+        <div class="watch-card-top">
+          <div class="watch-card-identity">
+            <span class="type-badge type-badge--${w.type.toLowerCase()}">${w.type}</span>
+            <span class="watch-ticker" style="color:${color}">${w.ticker}</span>
+          </div>
+          <button class="watch-remove-btn" onclick="removeFromWatchlist(${idx})" title="Remove from watchlist">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="watch-name" title="${w.name}">${w.name}</div>
+
+        ${w.reason ? `<div class="watch-reason" style="background:${rColor}18;color:${rColor}">${w.reason}</div>` : ''}
+
+        <div class="watch-price-row">
+          <div class="watch-price">${p !== null ? fmt$(p) : '—'}</div>
+          ${p !== null ? `<div class="watch-change ${pos ? 'change-pos' : 'change-neg'}">
+            ${pos ? '▲' : '▼'} ${fmt$(Math.abs(chg))} (${fmtPct(Math.abs(chgP))})
+          </div>` : '<div class="watch-no-price">Price pending next update</div>'}
+        </div>
+
+        ${pRange !== null ? `<div class="range-bar" style="width:100%;margin:0.5rem 0 0.25rem">
+          <div class="range-track"><div class="range-fill" style="width:${pRange}%"></div></div>
+          <div class="range-labels"><span>${fmt$(l52, 0)}</span><span>52w</span><span>${fmt$(h52, 0)}</span></div>
+        </div>` : ''}
+
+        ${w.targetPrice ? `<div class="watch-target">
+          <span>Target: ${fmt$(w.targetPrice)}</span>
+          ${targetDiff !== null ? `<span class="${targetDiff >= 0 ? 'change-pos' : 'change-neg'}">${targetDiff >= 0 ? '+' : ''}${targetDiff.toFixed(1)}% to target</span>` : ''}
+        </div>` : ''}
+
+        ${w.notes ? `<div class="watch-notes">${w.notes}</div>` : ''}
+
+        <div class="watch-actions">
+          ${inPortfolio
+            ? `<span class="watch-in-portfolio"><i class="fa-solid fa-check-circle"></i> In Portfolio</span>`
+            : `<button class="btn btn-xs btn-primary" onclick="showAddStockFromWatch('${w.ticker}','${w.name.replace(/'/g,"\\'")}','${w.type}')">
+                <i class="fa-solid fa-plus"></i> Add to Portfolio
+              </button>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function showAddWatchModal() {
+  ['watchTicker','watchName','watchReason','watchNotes'].forEach(id => { if (el(id)) el(id).value = ''; });
+  if (el('watchTarget')) el('watchTarget').value = '';
+  if (el('watchType'))   el('watchType').value   = 'Stock';
+  openModal('addWatchModal');
+  el('watchTicker')?.focus();
+}
+
+function confirmAddWatch() {
+  const ticker = (el('watchTicker')?.value || '').trim().toUpperCase();
+  const name   = (el('watchName')?.value   || '').trim();
+  const type   = el('watchType')?.value   || 'Stock';
+  const reason = (el('watchReason')?.value || '').trim();
+  const target = parseFloat(el('watchTarget')?.value) || null;
+  const notes  = (el('watchNotes')?.value  || '').trim();
+
+  if (!ticker) { showToast('Enter a ticker symbol', 'error'); return; }
+  if (!name)   { showToast('Enter the company/fund name', 'error'); return; }
+
+  if (!portfolio.watchlist) portfolio.watchlist = [];
+  if (portfolio.watchlist.find(w => w.ticker === ticker)) {
+    showToast(`${ticker} is already on your watchlist`, 'error'); return;
+  }
+
+  portfolio.watchlist.push({ ticker, name, type, reason, targetPrice: target, notes, addedDate: fmtDate() });
+  savePortfolio();
+  closeModal('addWatchModal');
+  renderWatchlist();
+  showToast(`Added ${ticker} to watchlist`, 'success');
+}
+
+function removeFromWatchlist(idx) {
+  if (!portfolio.watchlist) return;
+  const w = portfolio.watchlist[idx];
+  portfolio.watchlist.splice(idx, 1);
+  savePortfolio();
+  renderWatchlist();
+  showToast(`Removed ${w.ticker} from watchlist`, 'success');
+}
+
+function showAddStockFromWatch(ticker, name, type) {
+  closeModal('addWatchModal');
+  el('addTicker').value  = ticker;
+  el('addName').value    = name;
+  el('addType').value    = type;
+  el('addShares').value  = '';
+  el('addAvgCost').value = '';
+  openModal('addStockModal');
+  el('addShares')?.focus();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

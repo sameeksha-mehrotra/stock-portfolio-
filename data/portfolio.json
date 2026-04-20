@@ -9,5 +9,13 @@
     { "ticker": "GOOGL", "name": "Alphabet Inc. (Google)",               "type": "Stock", "shares": 40.2935,  "avgCost": 314.88 },
     { "ticker": "TSLA",  "name": "Tesla, Inc.",                          "type": "Stock", "shares": 59.0000,  "avgCost": 411.82 }
   ],
-  "transactions": []
+  "transactions": [],
+  "watchlist": [
+    { "ticker": "VXUS",  "name": "Vanguard Total International Stock ETF", "type": "ETF",   "reason": "International Diversification", "targetPrice": null, "notes": "Portfolio is 100% US — adding international exposure reduces home-country bias and captures emerging market growth" },
+    { "ticker": "BND",   "name": "Vanguard Total Bond Market ETF",          "type": "ETF",   "reason": "Defensive / Fixed Income",       "targetPrice": null, "notes": "No fixed income in portfolio — bonds reduce volatility and provide stability during equity downturns" },
+    { "ticker": "VHT",   "name": "Vanguard Health Care ETF",                "type": "ETF",   "reason": "Sector Gap — Healthcare",        "targetPrice": null, "notes": "Healthcare is a major GICS sector with defensive characteristics — currently absent from portfolio" },
+    { "ticker": "NVDA",  "name": "NVIDIA Corporation",                      "type": "Stock", "reason": "AI / Growth",                    "targetPrice": 900,  "notes": "Leading AI chip maker — high growth potential, though already indirectly held via VTI/VOO/VGT" },
+    { "ticker": "AVUV",  "name": "Avantis US Small Cap Value ETF",          "type": "ETF",   "reason": "Small Cap Value Tilt",           "targetPrice": null, "notes": "Small-cap value factor historically outperforms large caps long-term — adds factor diversification" },
+    { "ticker": "VNQ",   "name": "Vanguard Real Estate ETF",                "type": "ETF",   "reason": "Sector Gap — Real Estate",       "targetPrice": null, "notes": "REITs provide income + inflation hedge, low correlation with tech — adds asset class diversification" }
+  ]
 }
