@@ -6,6 +6,7 @@
 const STORAGE_KEY  = 'sm_portfolio_v2';
 const PRICES_URL   = './data/prices.json';
 const PORTFOLIO_URL= './data/portfolio.json';
+const CLAUDE_API_KEY_KEY = 'sm_claude_api_key';
 
 const TYPE_COLORS = {
   ETF:    '#38bdf8',
@@ -14,6 +15,123 @@ const TYPE_COLORS = {
   Crypto: '#f472b6',
   Other:  '#94a3b8',
 };
+
+// ── Sector mapping ────────────────────────────────────────────
+const SECTOR_COLORS = {
+  'Broad Market':            '#6366f1',
+  'Technology':              '#3b82f6',
+  'Communication Services':  '#ec4899',
+  'Consumer Discretionary':  '#f97316',
+  'Consumer Staples':        '#84cc16',
+  'Healthcare':              '#14b8a6',
+  'Financials':              '#0ea5e9',
+  'Energy':                  '#eab308',
+  'Real Estate':             '#a855f7',
+  'Industrials':             '#64748b',
+  'Materials':               '#d97706',
+  'Utilities':               '#10b981',
+  'Dividend / Income':       '#f59e0b',
+  'Crypto':                  '#f472b6',
+  'Cash':                    '#fbbf24',
+  'Unknown':                 '#94a3b8',
+};
+
+const SECTOR_ICONS = {
+  'Broad Market':            'fa-globe',
+  'Technology':              'fa-microchip',
+  'Communication Services':  'fa-satellite-dish',
+  'Consumer Discretionary':  'fa-cart-shopping',
+  'Consumer Staples':        'fa-basket-shopping',
+  'Healthcare':              'fa-heart-pulse',
+  'Financials':              'fa-building-columns',
+  'Energy':                  'fa-bolt',
+  'Real Estate':             'fa-building',
+  'Industrials':             'fa-industry',
+  'Materials':               'fa-gem',
+  'Utilities':               'fa-lightbulb',
+  'Dividend / Income':       'fa-hand-holding-dollar',
+  'Crypto':                  'fa-bitcoin-sign',
+  'Cash':                    'fa-piggy-bank',
+  'Unknown':                 'fa-circle-question',
+};
+
+const SECTOR_MAP = {
+  // Broad Market ETFs
+  VTI: 'Broad Market', VOO: 'Broad Market', SPY: 'Broad Market', IVV: 'Broad Market',
+  QQQ: 'Technology',  ITOT: 'Broad Market', SCHB: 'Broad Market', VT: 'Broad Market',
+  FZROX: 'Broad Market', FSKAX: 'Broad Market', SWTSX: 'Broad Market',
+  // Dividend / Income ETFs
+  SCHD: 'Dividend / Income', VYM: 'Dividend / Income', DVY: 'Dividend / Income',
+  HDV: 'Dividend / Income', SPYD: 'Dividend / Income', DGRO: 'Dividend / Income',
+  JEPI: 'Dividend / Income', DIVO: 'Dividend / Income',
+  // Sector ETFs
+  VGT: 'Technology', XLK: 'Technology', SOXX: 'Technology', SMH: 'Technology',
+  VHT: 'Healthcare', XLV: 'Healthcare', IBB: 'Healthcare',
+  VFH: 'Financials', XLF: 'Financials', KRE: 'Financials',
+  VDE: 'Energy', XLE: 'Energy', OIH: 'Energy',
+  VNQ: 'Real Estate', IYR: 'Real Estate', XLRE: 'Real Estate',
+  VIS: 'Industrials', XLI: 'Industrials',
+  VAW: 'Materials', XLB: 'Materials',
+  VPU: 'Utilities', XLU: 'Utilities',
+  VCR: 'Consumer Discretionary', XLY: 'Consumer Discretionary',
+  VDC: 'Consumer Staples', XLP: 'Consumer Staples',
+  VOX: 'Communication Services', XLC: 'Communication Services',
+  // Individual stocks — Technology
+  MSFT: 'Technology', AAPL: 'Technology', NVDA: 'Technology', AMD: 'Technology',
+  INTC: 'Technology', CSCO: 'Technology', CRM: 'Technology', ADBE: 'Technology',
+  ORCL: 'Technology', IBM: 'Technology', QCOM: 'Technology', TXN: 'Technology',
+  NOW: 'Technology', SNOW: 'Technology', PLTR: 'Technology', UBER: 'Technology',
+  // Communication Services
+  GOOGL: 'Communication Services', GOOG: 'Communication Services',
+  META: 'Communication Services', NFLX: 'Communication Services',
+  DIS: 'Communication Services', T: 'Communication Services',
+  VZ: 'Communication Services', CMCSA: 'Communication Services',
+  TMUS: 'Communication Services', ATVI: 'Communication Services',
+  SPOT: 'Communication Services', SNAP: 'Communication Services',
+  // Consumer Discretionary
+  TSLA: 'Consumer Discretionary', AMZN: 'Consumer Discretionary',
+  NKE: 'Consumer Discretionary', MCD: 'Consumer Discretionary',
+  HD: 'Consumer Discretionary', LOW: 'Consumer Discretionary',
+  SBUX: 'Consumer Discretionary', TGT: 'Consumer Discretionary',
+  BKNG: 'Consumer Discretionary', ABNB: 'Consumer Discretionary',
+  GM: 'Consumer Discretionary', F: 'Consumer Discretionary',
+  RIVN: 'Consumer Discretionary', LCID: 'Consumer Discretionary',
+  // Consumer Staples
+  WMT: 'Consumer Staples', KO: 'Consumer Staples', PEP: 'Consumer Staples',
+  PG: 'Consumer Staples', COST: 'Consumer Staples', PM: 'Consumer Staples',
+  MO: 'Consumer Staples', CL: 'Consumer Staples', GIS: 'Consumer Staples',
+  // Healthcare
+  JNJ: 'Healthcare', PFE: 'Healthcare', UNH: 'Healthcare', ABBV: 'Healthcare',
+  MRK: 'Healthcare', BMY: 'Healthcare', LLY: 'Healthcare', AMGN: 'Healthcare',
+  MRNA: 'Healthcare', BNTX: 'Healthcare', CVS: 'Healthcare', CI: 'Healthcare',
+  // Financials
+  'JPM': 'Financials', BAC: 'Financials', GS: 'Financials', V: 'Financials',
+  MA: 'Financials', WFC: 'Financials', 'BRK-B': 'Financials', 'BRK-A': 'Financials',
+  MS: 'Financials', C: 'Financials', AXP: 'Financials', PYPL: 'Financials',
+  SQ: 'Financials', COIN: 'Financials',
+  // Energy
+  XOM: 'Energy', CVX: 'Energy', COP: 'Energy', SLB: 'Energy',
+  OXY: 'Energy', PSX: 'Energy', MPC: 'Energy', VLO: 'Energy',
+  // Industrials
+  GE: 'Industrials', BA: 'Industrials', CAT: 'Industrials', MMM: 'Industrials',
+  HON: 'Industrials', UNP: 'Industrials', RTX: 'Industrials', LMT: 'Industrials',
+  DE: 'Industrials', FDX: 'Industrials', UPS: 'Industrials',
+  // Materials
+  GLD: 'Materials', SLV: 'Materials', FCX: 'Materials', NEM: 'Materials',
+  GOLD: 'Materials', NUE: 'Materials', X: 'Materials',
+  // Real Estate
+  AMT: 'Real Estate', SPG: 'Real Estate', PLD: 'Real Estate', EQIX: 'Real Estate',
+  PSA: 'Real Estate', O: 'Real Estate',
+  // Utilities
+  NEE: 'Utilities', SO: 'Utilities', DUK: 'Utilities', AEP: 'Utilities',
+  // Crypto
+  'BTC-USD': 'Crypto', 'ETH-USD': 'Crypto', 'BNB-USD': 'Crypto',
+  'SOL-USD': 'Crypto', 'ADA-USD': 'Crypto', GBTC: 'Crypto', BITO: 'Crypto',
+};
+
+function getSector(ticker) {
+  return SECTOR_MAP[ticker] || 'Unknown';
+}
 
 // ── State ────────────────────────────────────────────────────
 let portfolio = null;   // { cash, holdings[], transactions[] }
@@ -36,6 +154,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadPrices();
   renderAll();
   setupNavScroll();
+  initChat();
 });
 
 // ── Data: Portfolio ──────────────────────────────────────────
@@ -152,6 +271,7 @@ function renderAll() {
   renderAllocationChart();
   renderMiniCards();
   renderHoldingsTable();
+  renderSectorAnalysis();
   renderTransactions();
 }
 
@@ -774,4 +894,500 @@ function fmtNum(n, dec = 2) {
 
 function fmtDate() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SECTOR DIVERSIFICATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+let sectorChart = null;
+
+function buildSectorBreakdown() {
+  const byName = {};
+  for (const h of portfolio.holdings) {
+    const sector = getSector(h.ticker);
+    const val = holdingValue(h);
+    if (!byName[sector]) {
+      byName[sector] = {
+        sector,
+        color: SECTOR_COLORS[sector] || SECTOR_COLORS.Unknown,
+        icon:  SECTOR_ICONS[sector]  || SECTOR_ICONS.Unknown,
+        value: 0,
+        tickers: [],
+      };
+    }
+    byName[sector].value += val;
+    byName[sector].tickers.push(h.ticker);
+  }
+  if (portfolio.cash > 0) {
+    byName['Cash'] = {
+      sector: 'Cash', color: SECTOR_COLORS.Cash, icon: SECTOR_ICONS.Cash,
+      value: portfolio.cash, tickers: ['CASH'],
+    };
+  }
+  return Object.values(byName).sort((a, b) => b.value - a.value);
+}
+
+function computeDiversityScore(sectors) {
+  const tv = totalPortfolioValue();
+  const sv = totalSecuritiesValue();
+  let score = 100;
+  const strengths = [], gaps = [], notes = [];
+
+  const investedSectors = sectors.filter(s => s.sector !== 'Cash');
+  const sectorNames = investedSectors.map(s => s.sector);
+
+  const hasBroadMarket = portfolio.holdings.some(h =>
+    ['VTI','VOO','SPY','IVV','ITOT','SCHB','VT','FZROX','FSKAX','SWTSX'].includes(h.ticker)
+  );
+  const hasDividend = portfolio.holdings.some(h =>
+    ['SCHD','VYM','DVY','HDV','SPYD','DGRO','JEPI','DIVO'].includes(h.ticker)
+  );
+
+  if (hasBroadMarket) {
+    strengths.push('Broad market ETFs (VTI/VOO) provide instant exposure across all 11 GICS sectors');
+  } else {
+    score -= 15;
+    gaps.push('No broad market ETF — consider VTI or VOO for instant multi-sector diversification');
+  }
+
+  if (hasDividend) {
+    strengths.push('Dividend ETF adds income-focused, defensive companies to balance growth holdings');
+  } else {
+    score -= 5;
+    gaps.push('No dividend ETF — SCHD or VYM can add income stability and reduce volatility');
+  }
+
+  for (const s of investedSectors) {
+    if (s.sector === 'Broad Market') continue;
+    const pct = s.value / sv;
+    if (pct > 0.45) {
+      score -= 20;
+      gaps.push(`${s.sector} is over-concentrated at ${(pct*100).toFixed(1)}% of securities — consider trimming`);
+    } else if (pct > 0.28) {
+      score -= 8;
+      notes.push(`${s.sector} at ${(pct*100).toFixed(1)}% is elevated — monitor for further concentration`);
+    }
+  }
+
+  const nonBroad = investedSectors.filter(s => s.sector !== 'Broad Market').length;
+  if (nonBroad >= 4) {
+    strengths.push(`${nonBroad} distinct sector exposures beyond broad market — solid spread`);
+  } else if (nonBroad < 2) {
+    score -= 15;
+    gaps.push('Very few distinct sector bets — diversifying further would reduce single-sector risk');
+  }
+
+  if (!hasBroadMarket) {
+    const missingMajor = ['Healthcare','Financials','Energy','Consumer Staples'].filter(s => !sectorNames.includes(s));
+    if (missingMajor.length > 0) {
+      score -= missingMajor.length * 3;
+      gaps.push(`Missing major sectors: ${missingMajor.join(', ')}`);
+    }
+  } else {
+    notes.push('Broad market ETFs indirectly cover Healthcare, Financials, Energy, and all other sectors');
+  }
+
+  const cashPct = portfolio.cash / tv;
+  if (cashPct >= 0.06 && cashPct <= 0.20) {
+    strengths.push(`${(cashPct*100).toFixed(1)}% cash reserve — healthy dry powder for opportunities`);
+  } else if (cashPct > 0.25) {
+    score -= 5;
+    notes.push(`${(cashPct*100).toFixed(1)}% cash is high — deploying some into index ETFs could improve long-term returns`);
+  }
+
+  score = Math.max(10, Math.min(100, Math.round(score)));
+  return { score, strengths, gaps, notes };
+}
+
+function renderSectorAnalysis() {
+  const sectors = buildSectorBreakdown();
+  const { score, strengths, gaps, notes } = computeDiversityScore(sectors);
+  const tv = totalPortfolioValue();
+
+  // Score badge
+  const scoreBadge = el('diversityScore');
+  if (scoreBadge) {
+    const tier = score >= 80 ? ['Excellent','div-score--excellent']
+               : score >= 65 ? ['Good','div-score--good']
+               : score >= 45 ? ['Moderate','div-score--moderate']
+               : ['Needs Work','div-score--weak'];
+    scoreBadge.innerHTML = `
+      <div class="div-score-ring ${tier[1]}">
+        <span class="div-score-num">${score}</span>
+        <span class="div-score-label">/ 100</span>
+      </div>
+      <div class="div-score-tier">${tier[0]}</div>`;
+  }
+
+  // Donut chart
+  const ctx = document.getElementById('sectorChart');
+  if (ctx) {
+    if (sectorChart) sectorChart.destroy();
+    const labels = sectors.map(s => s.sector);
+    const values = sectors.map(s => s.value);
+    const colors = sectors.map(s => s.color);
+    sectorChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.map(c => c + 'cc'),
+          borderColor: colors,
+          borderWidth: 2,
+          hoverOffset: 6,
+        }],
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const pct = tv > 0 ? (ctx.raw / tv * 100).toFixed(1) : '0.0';
+                return ` ${fmt$(ctx.raw)} (${pct}%)`;
+              },
+            },
+          },
+        },
+        animation: { animateRotate: true, duration: 600 },
+      },
+    });
+    const cc = el('sectorChartCenter');
+    if (cc) cc.innerHTML = `<div class="chart-center-value">${sectors.length}</div><div class="chart-center-label">Sectors</div>`;
+  }
+
+  // Legend
+  const leg = el('sectorLegend');
+  if (leg) {
+    leg.innerHTML = sectors.map(s => {
+      const pct = tv > 0 ? (s.value / tv * 100).toFixed(1) : '0.0';
+      return `<div class="legend-item">
+        <div class="legend-dot" style="background:${s.color}"></div>
+        <span class="legend-label">${s.sector}</span>
+        <span class="legend-pct">${pct}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Sector cards
+  const cardsEl = el('sectorCards');
+  if (cardsEl) {
+    cardsEl.innerHTML = sectors.filter(s => s.sector !== 'Cash').map(s => {
+      const pct = tv > 0 ? (s.value / tv * 100) : 0;
+      const barW = Math.min(pct * 2.5, 100).toFixed(1);
+      return `
+        <div class="sector-card">
+          <div class="sector-card-header">
+            <div class="sector-card-icon" style="background:${s.color}22;color:${s.color}">
+              <i class="fa-solid ${s.icon}"></i>
+            </div>
+            <div class="sector-card-info">
+              <div class="sector-card-name">${s.sector}</div>
+              <div class="sector-card-tickers">${s.tickers.join(' · ')}</div>
+            </div>
+            <div class="sector-card-pct" style="color:${s.color}">${pct.toFixed(1)}%</div>
+          </div>
+          <div class="sector-bar-track">
+            <div class="sector-bar-fill" style="width:${barW}%;background:${s.color}"></div>
+          </div>
+          <div class="sector-card-value">${fmt$(s.value)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Insights panel
+  const panel = el('insightsPanel');
+  if (panel) {
+    const makeItems = (arr, cls, icon) => arr.map(t =>
+      `<div class="insight-item insight-item--${cls}"><i class="fa-solid ${icon}"></i><span>${t}</span></div>`
+    ).join('');
+    panel.innerHTML = `
+      <div class="insights-title"><i class="fa-solid fa-lightbulb"></i> Diversification Insights</div>
+      <div class="insights-grid">
+        ${strengths.length ? `<div class="insights-group">
+          <div class="insights-group-label insights-group-label--strength">Strengths</div>
+          ${makeItems(strengths, 'strength', 'fa-check-circle')}
+        </div>` : ''}
+        ${gaps.length ? `<div class="insights-group">
+          <div class="insights-group-label insights-group-label--gap">Gaps &amp; Actions</div>
+          ${makeItems(gaps, 'gap', 'fa-triangle-exclamation')}
+        </div>` : ''}
+        ${notes.length ? `<div class="insights-group">
+          <div class="insights-group-label insights-group-label--note">Notes</div>
+          ${makeItems(notes, 'note', 'fa-circle-info')}
+        </div>` : ''}
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  AI CHAT ADVISOR
+// ══════════════════════════════════════════════════════════════════════════════
+
+let chatOpen = false;
+let chatHistory = [];
+
+function initChat() {
+  const hasKey = !!localStorage.getItem(CLAUDE_API_KEY_KEY);
+  const setup = el('chatApiSetup');
+  const inputArea = el('chatInputArea');
+  if (setup)     setup.style.display    = hasKey ? 'none' : 'flex';
+  if (inputArea) inputArea.style.display = hasKey ? 'flex' : 'none';
+  if (!hasKey) el('chatSubtitle') && (el('chatSubtitle').textContent = 'API key required');
+  renderWelcomeMessage();
+}
+
+function renderWelcomeMessage() {
+  const msgs = el('chatMessages');
+  if (!msgs || msgs.children.length > 0) return;
+  addChatBubble('ai', `Hi! I'm your **Portfolio Advisor** powered by Claude AI. 📊\n\nTell me your investment goals and I'll analyze your actual holdings to give personalized advice — including specific steps, sector gaps, and curated resources.\n\n*Try asking: "I want moderate risk and steady growth — what should I change?"*`);
+}
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const panel = el('chatPanel');
+  const fab   = el('chatFab');
+  if (panel) panel.classList.toggle('chat-panel--open', chatOpen);
+  if (fab)   fab.classList.toggle('chat-fab--open', chatOpen);
+  if (chatOpen) {
+    setTimeout(() => {
+      const inp = el('chatInput');
+      if (inp) inp.focus();
+      scrollChatToBottom();
+    }, 150);
+  }
+}
+
+function showApiKeySetup() {
+  const setup = el('chatApiSetup');
+  const input = el('chatInputArea');
+  if (setup) setup.style.display = 'flex';
+  if (input) input.style.display = 'none';
+  const keyInput = el('apiKeyInput');
+  if (keyInput) {
+    const existing = localStorage.getItem(CLAUDE_API_KEY_KEY);
+    if (existing) keyInput.value = existing;
+    keyInput.focus();
+  }
+}
+
+function saveApiKey() {
+  const val = (el('apiKeyInput')?.value || '').trim();
+  if (!val.startsWith('sk-ant-')) {
+    showToast('Invalid key format — should start with sk-ant-', 'error');
+    return;
+  }
+  localStorage.setItem(CLAUDE_API_KEY_KEY, val);
+  const setup = el('chatApiSetup');
+  const input = el('chatInputArea');
+  if (setup) setup.style.display = 'none';
+  if (input) input.style.display = 'flex';
+  el('chatSubtitle') && (el('chatSubtitle').textContent = 'Powered by Claude AI');
+  showToast('API key saved', 'success');
+}
+
+function clearChat() {
+  chatHistory = [];
+  const msgs = el('chatMessages');
+  if (msgs) msgs.innerHTML = '';
+  renderWelcomeMessage();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+}
+
+async function sendChatMessage() {
+  const apiKey = localStorage.getItem(CLAUDE_API_KEY_KEY);
+  if (!apiKey) { showApiKeySetup(); return; }
+
+  const inp = el('chatInput');
+  const userText = (inp?.value || '').trim();
+  if (!userText) return;
+
+  inp.value = '';
+  inp.style.height = '';
+
+  addChatBubble('user', userText);
+  chatHistory.push({ role: 'user', content: userText });
+
+  const loadingId = addChatLoading();
+  el('chatSendBtn') && (el('chatSendBtn').disabled = true);
+
+  try {
+    const reply = await callClaudeAPI(apiKey, chatHistory);
+    removeChatLoading(loadingId);
+    addChatBubble('ai', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    removeChatLoading(loadingId);
+    addChatBubble('ai', `⚠️ Error: ${err.message}\n\nIf this is a CORS error, try opening the site locally or check that your API key is valid.`);
+  } finally {
+    el('chatSendBtn') && (el('chatSendBtn').disabled = false);
+  }
+}
+
+async function callClaudeAPI(apiKey, messages) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: buildPortfolioContext(),
+      messages,
+    }),
+  });
+
+  if (!res.ok) {
+    let errMsg = `HTTP ${res.status}`;
+    try { const j = await res.json(); errMsg = j.error?.message || errMsg; } catch {}
+    throw new Error(errMsg);
+  }
+
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+function buildPortfolioContext() {
+  const tv  = totalPortfolioValue();
+  const sv  = totalSecuritiesValue();
+  const pl  = totalPL();
+  const plP = totalPLPct();
+  const sectors = buildSectorBreakdown();
+  const date = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+
+  const holdingsTable = portfolio.holdings.map(h => {
+    const val = holdingValue(h);
+    const wt  = (val / tv * 100).toFixed(1);
+    const sector = getSector(h.ticker);
+    return `• ${h.ticker} (${h.name}) — ${sector} — ${fmtNum(h.shares,4)} shares @ ${fmt$(getPrice(h.ticker) ?? h.avgCost)} = ${fmt$(val)} (${wt}% of portfolio)`;
+  }).join('\n');
+
+  const sectorTable = sectors.filter(s => s.sector !== 'Cash').map(s => {
+    const pct = (s.value / tv * 100).toFixed(1);
+    return `• ${s.sector}: ${fmt$(s.value)} (${pct}%) — [${s.tickers.join(', ')}]`;
+  }).join('\n');
+
+  return `You are an expert, friendly portfolio advisor. You have direct access to the user's real portfolio data below. Your goal is to help them diversify for maximum profit at moderate risk.
+
+PORTFOLIO SNAPSHOT (as of ${date}):
+Total Portfolio Value: ${fmt$(tv)}
+Securities: ${fmt$(sv)} | Cash: ${fmt$(portfolio.cash)} (${(portfolio.cash/tv*100).toFixed(1)}% of portfolio)
+Total Gain/Loss: ${pl >= 0 ? '+' : ''}${fmt$(pl)} (${fmtPct(plP, true)})
+
+HOLDINGS:
+${holdingsTable}
+
+SECTOR BREAKDOWN:
+${sectorTable}
+
+USER INVESTMENT PHILOSOPHY: Diversification for maximum profit with moderate risk. Mix of growth ETFs, dividend income, and individual stocks.
+
+INSTRUCTIONS FOR YOUR RESPONSES:
+1. Always reference specific tickers and dollar amounts from the portfolio above
+2. Give 3-5 concrete, actionable recommendations
+3. Flag any concentration risks you notice
+4. Suggest specific ETFs or sectors to fill gaps
+5. End EVERY response with a "Resources" section containing 2-3 links to reputable financial education sources (Investopedia, Bogleheads, Morningstar, Vanguard Investor Education) — use real, stable URLs
+6. Format using markdown: **bold** for key points, bullet lists for recommendations
+7. Keep responses focused and under 400 words unless the question demands more depth`;
+}
+
+function addChatBubble(role, text) {
+  const msgs = el('chatMessages');
+  if (!msgs) return;
+
+  const div = document.createElement('div');
+  div.className = `chat-bubble chat-bubble--${role}`;
+
+  const html = renderChatMarkdown(text);
+  div.innerHTML = `<div class="chat-bubble-content">${html}</div>`;
+  msgs.appendChild(div);
+  scrollChatToBottom();
+}
+
+function addChatLoading() {
+  const msgs = el('chatMessages');
+  if (!msgs) return null;
+  const id = 'chat-loading-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'chat-bubble chat-bubble--ai';
+  div.id = id;
+  div.innerHTML = `<div class="chat-bubble-content chat-loading"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  scrollChatToBottom();
+  return id;
+}
+
+function removeChatLoading(id) {
+  if (id) el(id)?.remove();
+}
+
+function scrollChatToBottom() {
+  const msgs = el('chatMessages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderChatMarkdown(text) {
+  // Process links first (before escaping)
+  const linkPlaceholders = [];
+  text = text.replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
+    const idx = linkPlaceholders.length;
+    linkPlaceholders.push(`<a href="${url}" target="_blank" rel="noopener" class="chat-link">${label} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65em"></i></a>`);
+    return `\x00LINK${idx}\x00`;
+  });
+
+  // Escape HTML
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Inline formatting
+  text = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Restore links
+  linkPlaceholders.forEach((link, i) => { text = text.replace(`\x00LINK${i}\x00`, link); });
+
+  // Process line by line
+  const lines = text.split('\n');
+  const out = [];
+  let inList = false;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      continue;
+    }
+    const headMatch = line.match(/^#{1,3} (.+)/);
+    if (headMatch) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push(`<h4>${headMatch[1]}</h4>`);
+      continue;
+    }
+    const listMatch = line.match(/^(?:[*\-]|\d+\.) (.+)/);
+    if (listMatch) {
+      if (!inList) { out.push('<ul>'); inList = true; }
+      out.push(`<li>${listMatch[1]}</li>`);
+      continue;
+    }
+    if (inList) { out.push('</ul>'); inList = false; }
+    out.push(`<p>${line}</p>`);
+  }
+  if (inList) out.push('</ul>');
+
+  return out.join('');
 }

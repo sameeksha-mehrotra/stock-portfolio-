@@ -141,6 +141,39 @@
   </div>
 </section>
 
+<!-- ─── SECTOR DIVERSIFICATION ────────────────────────────────────────────────── -->
+<section class="section" id="diversification">
+  <div class="container">
+
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Sector Diversification</h2>
+        <p class="section-sub">How your investments spread across sectors, styles &amp; asset classes</p>
+      </div>
+      <div id="diversityScore" class="diversity-score-badge"></div>
+    </div>
+
+    <div class="diversification-layout">
+      <!-- Sector chart -->
+      <div class="chart-card">
+        <h3 class="chart-title">Sector Allocation</h3>
+        <div class="chart-wrap">
+          <canvas id="sectorChart"></canvas>
+          <div class="chart-center" id="sectorChartCenter"></div>
+        </div>
+        <div class="chart-legend" id="sectorLegend"></div>
+      </div>
+
+      <!-- Sector cards -->
+      <div id="sectorCards" class="sector-cards"></div>
+    </div>
+
+    <!-- Insights -->
+    <div id="insightsPanel" class="insights-panel"></div>
+
+  </div>
+</section>
+
 <!-- ─── TRANSACTIONS ──────────────────────────────────────────────────────────── -->
 <section class="section section--alt" id="transactions">
   <div class="container">
@@ -371,6 +404,65 @@
 
 <!-- Toast notification -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── CHAT ADVISOR WIDGET ────────────────────────────────────────────────── -->
+<div class="chat-widget" id="chatWidget">
+
+  <!-- Chat panel -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+        <div>
+          <div class="chat-title">Portfolio Advisor</div>
+          <div class="chat-subtitle" id="chatSubtitle">Powered by Claude AI</div>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="chat-icon-btn" onclick="showApiKeySetup()" title="Configure API key">
+          <i class="fa-solid fa-key"></i>
+        </button>
+        <button class="chat-icon-btn" onclick="clearChat()" title="Clear chat">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+        <button class="chat-icon-btn" onclick="toggleChat()" title="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <!-- API key setup banner -->
+    <div class="chat-api-setup" id="chatApiSetup">
+      <div class="chat-api-label"><i class="fa-solid fa-key"></i> Enter your Anthropic API key to enable AI advice</div>
+      <div class="chat-api-row">
+        <input type="password" id="apiKeyInput" class="chat-api-input" placeholder="sk-ant-api03-…" />
+        <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Save</button>
+      </div>
+      <div class="chat-api-hint">
+        Stored locally in your browser only · Never sent anywhere except Anthropic's API ·
+        <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener">Get a key →</a>
+      </div>
+    </div>
+
+    <!-- Chat input -->
+    <div class="chat-input-area" id="chatInputArea">
+      <textarea id="chatInput" class="chat-textarea" placeholder="Ask about your portfolio goals, risks, rebalancing…" rows="2"
+                onkeydown="handleChatKey(event)"></textarea>
+      <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating action button -->
+  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Portfolio Advisor">
+    <i class="fa-solid fa-robot"></i>
+    <span class="chat-fab-label">Advisor</span>
+    <span class="chat-fab-dot" id="chatFabDot"></span>
+  </button>
+</div>
 
 <script src="app.js"></script>
 </body>
