@@ -161,7 +161,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function loadPortfolio() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
-    try { portfolio = JSON.parse(stored); return; } catch {}
+    try {
+      portfolio = JSON.parse(stored);
+      // Backfill watchlist from remote JSON if missing from localStorage
+      if (!portfolio.watchlist || portfolio.watchlist.length === 0) {
+        try {
+          const res = await fetch(PORTFOLIO_URL + '?v=' + Date.now());
+          const remote = await res.json();
+          if (remote.watchlist?.length) {
+            portfolio.watchlist = remote.watchlist;
+            savePortfolio();
+          }
+        } catch {}
+      }
+      return;
+    } catch {}
   }
   // First visit — load from portfolio.json in repo
   try {
