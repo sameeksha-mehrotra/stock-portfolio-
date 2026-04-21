@@ -6,7 +6,7 @@
 const STORAGE_KEY  = 'sm_portfolio_v2';
 const PRICES_URL   = './data/prices.json';
 const PORTFOLIO_URL= './data/portfolio.json';
-const CLAUDE_API_KEY_KEY = 'sm_claude_api_key';
+const GEMINI_API_KEY_KEY = 'sm_gemini_api_key';
 
 const TYPE_COLORS = {
   ETF:    '#38bdf8',
@@ -1302,19 +1302,19 @@ let chatOpen = false;
 let chatHistory = [];
 
 function initChat() {
-  const hasKey = !!localStorage.getItem(CLAUDE_API_KEY_KEY);
+  const hasKey = !!localStorage.getItem(GEMINI_API_KEY_KEY);
   const setup = el('chatApiSetup');
   const inputArea = el('chatInputArea');
   if (setup)     setup.style.display    = hasKey ? 'none' : 'flex';
   if (inputArea) inputArea.style.display = hasKey ? 'flex' : 'none';
-  if (!hasKey) el('chatSubtitle') && (el('chatSubtitle').textContent = 'API key required');
+  if (!hasKey) el('chatSubtitle') && (el('chatSubtitle').textContent = 'Free API key required');
   renderWelcomeMessage();
 }
 
 function renderWelcomeMessage() {
   const msgs = el('chatMessages');
   if (!msgs || msgs.children.length > 0) return;
-  addChatBubble('ai', `Hi! I'm your **Portfolio Advisor** powered by Claude AI. 📊\n\nTell me your investment goals and I'll analyze your actual holdings to give personalized advice — including specific steps, sector gaps, and curated resources.\n\n*Try asking: "I want moderate risk and steady growth — what should I change?"*`);
+  addChatBubble('ai', `Hi! I'm your **Portfolio Advisor** powered by Gemini AI. 📊\n\nTell me your investment goals and I'll analyze your actual holdings to give personalized advice — including specific steps, sector gaps, and curated resources.\n\n*Try: "I want moderate risk and steady growth — what should I change?"*`);
 }
 
 function toggleChat() {
@@ -1339,7 +1339,7 @@ function showApiKeySetup() {
   if (input) input.style.display = 'none';
   const keyInput = el('apiKeyInput');
   if (keyInput) {
-    const existing = localStorage.getItem(CLAUDE_API_KEY_KEY);
+    const existing = localStorage.getItem(GEMINI_API_KEY_KEY);
     if (existing) keyInput.value = existing;
     keyInput.focus();
   }
@@ -1347,11 +1347,11 @@ function showApiKeySetup() {
 
 function saveApiKey() {
   const val = (el('apiKeyInput')?.value || '').trim();
-  if (!val.startsWith('sk-ant-')) {
-    showToast('Invalid key format — should start with sk-ant-', 'error');
+  if (val.length < 20) {
+    showToast('Key looks too short — paste the full key from Google AI Studio', 'error');
     return;
   }
-  localStorage.setItem(CLAUDE_API_KEY_KEY, val);
+  localStorage.setItem(GEMINI_API_KEY_KEY, val);
   const setup = el('chatApiSetup');
   const input = el('chatInputArea');
   if (setup) setup.style.display = 'none';
@@ -1375,7 +1375,7 @@ function handleChatKey(e) {
 }
 
 async function sendChatMessage() {
-  const apiKey = localStorage.getItem(CLAUDE_API_KEY_KEY);
+  const apiKey = localStorage.getItem(GEMINI_API_KEY_KEY);
   if (!apiKey) { showApiKeySetup(); return; }
 
   const inp = el('chatInput');
@@ -1405,21 +1405,24 @@ async function sendChatMessage() {
 }
 
 async function callClaudeAPI(apiKey, messages) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      system: buildPortfolioContext(),
-      messages,
-    }),
-  });
+  // Convert chat history to Gemini format
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: buildPortfolioContext() }] },
+        contents,
+        generationConfig: { maxOutputTokens: 1500, temperature: 0.7 },
+      }),
+    }
+  );
 
   if (!res.ok) {
     let errMsg = `HTTP ${res.status}`;
@@ -1428,7 +1431,7 @@ async function callClaudeAPI(apiKey, messages) {
   }
 
   const data = await res.json();
-  return data.content[0].text;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
 }
 
 function buildPortfolioContext() {
