@@ -221,8 +221,16 @@ async function loadPrices(showSpinner = false) {
     prices = data.prices || {};
     pricesUpdated = data.updated ? new Date(data.updated) : null;
     updateTimestampDisplay();
+    return true;
   } catch {
-    showToast('Could not load prices — showing last known data', 'error');
+    const isFile = location.protocol === 'file:';
+    showToast(
+      isFile
+        ? 'Open the site via a local server (python3 -m http.server) to load prices'
+        : 'Could not load prices — showing last known data',
+      'error'
+    );
+    return false;
   } finally {
     if (showSpinner) {
       const icon = document.querySelector('#refreshBtn i');
@@ -232,9 +240,9 @@ async function loadPrices(showSpinner = false) {
 }
 
 async function refreshPrices() {
-  await loadPrices(true);
+  const ok = await loadPrices(true);
   renderAll();
-  showToast('Prices refreshed', 'success');
+  if (ok) showToast('Prices refreshed', 'success');
 }
 
 function updateTimestampDisplay() {
