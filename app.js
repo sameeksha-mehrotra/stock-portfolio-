@@ -160,33 +160,31 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ── Data: Portfolio ──────────────────────────────────────────
 async function loadPortfolio() {
   const stored = localStorage.getItem(STORAGE_KEY);
+  let local = null;
   if (stored) {
-    try {
-      portfolio = JSON.parse(stored);
-      // Backfill watchlist from remote JSON if missing from localStorage
-      if (!portfolio.watchlist || portfolio.watchlist.length === 0) {
-        try {
-          const res = await fetch(PORTFOLIO_URL + '?v=' + Date.now());
-          const remote = await res.json();
-          if (remote.watchlist?.length) {
-            portfolio.watchlist = remote.watchlist;
-            savePortfolio();
-          }
-        } catch {}
-      }
-      return;
-    } catch {}
+    try { local = JSON.parse(stored); } catch {}
   }
-  // First visit — load from portfolio.json in repo
+
+  // Always fetch remote — it's the source of truth for cash, holdings, watchlist
   try {
     const res = await fetch(PORTFOLIO_URL + '?v=' + Date.now());
-    portfolio = await res.json();
-    if (!portfolio.transactions) portfolio.transactions = [];
-    if (!portfolio.watchlist)    portfolio.watchlist    = [];
+    const remote = await res.json();
+    portfolio = {
+      cash:         remote.cash,
+      holdings:     remote.holdings     || [],
+      watchlist:    remote.watchlist    || [],
+      transactions: local?.transactions || remote.transactions || [],
+    };
     savePortfolio();
-  } catch {
-    portfolio = getDefaultPortfolio();
+    return;
+  } catch {}
+
+  // Offline fallback — use whatever is in localStorage
+  if (local) {
+    portfolio = local;
+    return;
   }
+  portfolio = getDefaultPortfolio();
 }
 
 function savePortfolio() {
