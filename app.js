@@ -6,7 +6,7 @@
 const STORAGE_KEY  = 'sm_portfolio_v2';
 const PRICES_URL   = './data/prices.json';
 const PORTFOLIO_URL= './data/portfolio.json';
-const GEMINI_API_KEY_KEY = 'sm_gemini_api_key';
+const GROQ_API_KEY_KEY = 'sm_groq_api_key';
 
 const TYPE_COLORS = {
   ETF:    '#38bdf8',
@@ -1309,7 +1309,7 @@ let chatOpen = false;
 let chatHistory = [];
 
 function initChat() {
-  const hasKey = !!localStorage.getItem(GEMINI_API_KEY_KEY);
+  const hasKey = !!localStorage.getItem(GROQ_API_KEY_KEY);
   const setup = el('chatApiSetup');
   const inputArea = el('chatInputArea');
   if (setup)     setup.style.display    = hasKey ? 'none' : 'flex';
@@ -1321,7 +1321,7 @@ function initChat() {
 function renderWelcomeMessage() {
   const msgs = el('chatMessages');
   if (!msgs || msgs.children.length > 0) return;
-  addChatBubble('ai', `Hi! I'm your **Portfolio Advisor** powered by Gemini AI. 📊\n\nTell me your investment goals and I'll analyze your actual holdings to give personalized advice — including specific steps, sector gaps, and curated resources.\n\n*Try: "I want moderate risk and steady growth — what should I change?"*`);
+  addChatBubble('ai', `Hi! I'm your **Portfolio Advisor** powered by Llama 3 (Groq). 📊\n\nTell me your investment goals and I'll analyze your actual holdings to give personalized advice — including specific steps, sector gaps, and curated resources.\n\n*Try: "I want moderate risk and steady growth — what should I change?"*`);
 }
 
 function toggleChat() {
@@ -1346,7 +1346,7 @@ function showApiKeySetup() {
   if (input) input.style.display = 'none';
   const keyInput = el('apiKeyInput');
   if (keyInput) {
-    const existing = localStorage.getItem(GEMINI_API_KEY_KEY);
+    const existing = localStorage.getItem(GROQ_API_KEY_KEY);
     if (existing) keyInput.value = existing;
     keyInput.focus();
   }
@@ -1354,16 +1354,16 @@ function showApiKeySetup() {
 
 function saveApiKey() {
   const val = (el('apiKeyInput')?.value || '').trim();
-  if (val.length < 20) {
-    showToast('Key looks too short — paste the full key from Google AI Studio', 'error');
+  if (!val.startsWith('gsk_') || val.length < 40) {
+    showToast('Key looks invalid — paste the full key from console.groq.com (starts with gsk_)', 'error');
     return;
   }
-  localStorage.setItem(GEMINI_API_KEY_KEY, val);
+  localStorage.setItem(GROQ_API_KEY_KEY, val);
   const setup = el('chatApiSetup');
   const input = el('chatInputArea');
   if (setup) setup.style.display = 'none';
   if (input) input.style.display = 'flex';
-  el('chatSubtitle') && (el('chatSubtitle').textContent = 'Powered by Claude AI');
+  el('chatSubtitle') && (el('chatSubtitle').textContent = 'Powered by Llama 3 · Groq');
   showToast('API key saved', 'success');
 }
 
@@ -1382,7 +1382,7 @@ function handleChatKey(e) {
 }
 
 async function sendChatMessage() {
-  const apiKey = localStorage.getItem(GEMINI_API_KEY_KEY);
+  const apiKey = localStorage.getItem(GROQ_API_KEY_KEY);
   if (!apiKey) { showApiKeySetup(); return; }
 
   const inp = el('chatInput');
@@ -1412,24 +1412,22 @@ async function sendChatMessage() {
 }
 
 async function callClaudeAPI(apiKey, messages) {
-  // Convert chat history to Gemini format
-  const contents = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: buildPortfolioContext() }] },
-        contents,
-        generationConfig: { maxOutputTokens: 1500, temperature: 0.7 },
-      }),
-    }
-  );
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: buildPortfolioContext() },
+        ...messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+      ],
+      max_tokens: 1500,
+      temperature: 0.7,
+    }),
+  });
 
   if (!res.ok) {
     let errMsg = `HTTP ${res.status}`;
@@ -1438,7 +1436,7 @@ async function callClaudeAPI(apiKey, messages) {
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+  return data.choices?.[0]?.message?.content || 'No response received.';
 }
 
 function buildPortfolioContext() {
