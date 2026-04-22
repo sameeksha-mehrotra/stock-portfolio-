@@ -71,7 +71,7 @@ def main():
     prices = fetch_prices(all_tickers)
 
     output = {
-        "updated": datetime.now(timezone.utc).isoformat(),
+        "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "prices": prices,
     }
 

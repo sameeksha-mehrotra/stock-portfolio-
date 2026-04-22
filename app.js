@@ -219,7 +219,8 @@ async function loadPrices(showSpinner = false) {
     const res = await fetch(PRICES_URL + '?v=' + Date.now());
     const data = await res.json();
     prices = data.prices || {};
-    pricesUpdated = data.updated ? new Date(data.updated) : null;
+    const parsed = data.updated ? new Date(data.updated) : null;
+    pricesUpdated = parsed && !isNaN(parsed) ? parsed : null;
     updateTimestampDisplay();
     return true;
   } catch {

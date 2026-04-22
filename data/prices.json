@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-21T22:11:19.488350+00:00",
+  "updated": "2026-04-22T00:29:49Z",
   "prices": {
     "VTI": {
       "price": 347.84,
@@ -17,10 +17,10 @@
     },
     "VGT": {
       "price": 101.02,
-      "change": 0.0,
-      "changePct": 0.0,
-      "high52": NaN,
-      "low52": NaN
+      "change": -708.11,
+      "changePct": -0.87515,
+      "high52": 809.32,
+      "low52": 496.05
     },
     "SCHD": {
       "price": 30.98,
