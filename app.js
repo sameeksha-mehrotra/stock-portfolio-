@@ -1367,6 +1367,18 @@ function saveApiKey() {
   showToast('API key saved', 'success');
 }
 
+function downloadChat() {
+  if (!chatHistory.length) { showToast('No chat history to download', 'info'); return; }
+  const lines = chatHistory.map(m => `${m.role === 'user' ? 'You' : 'Advisor'}: ${m.content}`).join('\n\n');
+  const blob = new Blob([lines], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `portfolio-chat-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function clearChat() {
   chatHistory = [];
   const msgs = el('chatMessages');
