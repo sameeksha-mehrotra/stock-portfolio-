@@ -1,94 +1,94 @@
 {
-  "updated": "2026-05-07T22:37:07Z",
+  "updated": "2026-05-08T22:31:54Z",
   "prices": {
     "VTI": {
-      "price": 360.2,
-      "change": -1.66,
-      "changePct": -0.004587,
-      "high52": 362.27,
-      "low52": 276.5
+      "price": 362.87,
+      "change": 2.67,
+      "changePct": 0.007413,
+      "high52": 362.72,
+      "low52": 277.25
     },
     "VOO": {
-      "price": 672.54,
-      "change": -2.12,
-      "changePct": -0.003142,
-      "high52": 675.34,
-      "low52": 516.35
+      "price": 678.04,
+      "change": 5.5,
+      "changePct": 0.008178,
+      "high52": 676.76,
+      "low52": 517.36
     },
     "VGT": {
-      "price": 109.5,
-      "change": -0.06,
-      "changePct": -0.000548,
-      "high52": 109.62,
-      "low52": 70.78
+      "price": 112.44,
+      "change": 2.94,
+      "changePct": 0.026849,
+      "high52": 110.97,
+      "low52": 71.0
     },
     "SCHD": {
-      "price": 31.54,
-      "change": -0.12,
-      "changePct": -0.00379,
+      "price": 31.62,
+      "change": 0.08,
+      "changePct": 0.002536,
       "high52": 32.13,
-      "low52": 25.65
+      "low52": 25.69
     },
     "MSFT": {
-      "price": 420.77,
-      "change": 6.81,
-      "changePct": 0.016451,
+      "price": 415.12,
+      "change": -5.65,
+      "changePct": -0.013428,
       "high52": 555.45,
       "low52": 356.28
     },
     "GOOGL": {
-      "price": 397.99,
-      "change": -0.05,
-      "changePct": -0.000126,
-      "high52": 399.85,
+      "price": 400.8,
+      "change": 2.81,
+      "changePct": 0.00706,
+      "high52": 400.1,
       "low52": 152.2
     },
     "TSLA": {
-      "price": 411.79,
-      "change": 13.06,
-      "changePct": 0.032754,
+      "price": 428.35,
+      "change": 16.56,
+      "changePct": 0.040215,
       "high52": 498.83,
       "low52": 273.21
     },
     "VXUS": {
-      "price": 84.25,
-      "change": -1.37,
-      "changePct": -0.016001,
-      "high52": 85.67,
-      "low52": 64.61
+      "price": 85.43,
+      "change": 1.18,
+      "changePct": 0.014006,
+      "high52": 85.78,
+      "low52": 64.85
     },
     "BND": {
-      "price": 73.36,
-      "change": -0.19,
-      "changePct": -0.002583,
+      "price": 73.55,
+      "change": 0.19,
+      "changePct": 0.00259,
       "high52": 75.23,
       "low52": 71.76
     },
     "VHT": {
-      "price": 271.09,
-      "change": -2.01,
-      "changePct": -0.00736,
+      "price": 268.98,
+      "change": -2.11,
+      "changePct": -0.007783,
       "high52": 298.61,
       "low52": 234.13
     },
     "NVDA": {
-      "price": 211.5,
-      "change": 3.67,
-      "changePct": 0.017659,
+      "price": 215.2,
+      "change": 3.7,
+      "changePct": 0.017494,
       "high52": 216.83,
       "low52": 115.21
     },
     "AVUV": {
-      "price": 119.18,
-      "change": -1.21,
-      "changePct": -0.010051,
+      "price": 119.84,
+      "change": 0.66,
+      "changePct": 0.005538,
       "high52": 121.11,
-      "low52": 85.17
+      "low52": 85.79
     },
     "VNQ": {
-      "price": 96.39,
-      "change": -0.7,
-      "changePct": -0.00721,
+      "price": 96.62,
+      "change": 0.23,
+      "changePct": 0.002386,
       "high52": 97.37,
       "low52": 86.36
     }
